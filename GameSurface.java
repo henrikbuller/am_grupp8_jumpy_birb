@@ -150,7 +150,8 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
             if (highScoreList.size() > 0) {
                 readHighscoresFromFile(highscoreFile);
-            }
+                addToListAgain();
+            } 
             
 
             g.setColor(Color.white);
@@ -346,12 +347,14 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         }
     }
 
+    static List<HighScoreEntry> placeholderList = new ArrayList<>();
     private static void readHighscoresFromFile(Path highscoreFile) throws IOException {
         try (var reader = Files.newBufferedReader(highscoreFile)) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] arr = line.split(" ");
                 HighScoreEntry playerEntry = new HighScoreEntry(arr[0], Integer.parseInt(arr[1]));
+                placeholderList.add(playerEntry);
               
             }
         }
@@ -359,7 +362,14 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     }
     
     private void emptyHighscoreList() {
-        highScoreList.clear();
+       highScoreList.clear();
+        
+    }
+    
+    private void addToListAgain() {
+        placeholderList.forEach((highScoreEntry) -> {
+            highScoreList.add(highScoreEntry);
+        });
     }
 
 }
