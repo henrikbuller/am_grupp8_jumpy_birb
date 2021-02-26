@@ -52,14 +52,15 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
     private final int height = 400;
     private int score = 0;
     private String playerName;
-    private int scoreListCount = 0;
     Integer fakeScore = 1;
-
+    int gameSpeed;
+    
     List<HighScoreEntry> highScoreList = new ArrayList<>();
 
     public BufferedImage pip;
 
-    public GameSurface() {
+    public GameSurface(int gameSpeed) {
+        this.gameSpeed = gameSpeed;
         this.gameOver = false;
         this.pipes = new ArrayList<>();
 
@@ -102,16 +103,10 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
         // top pipe
         pipes.add(new Rectangle(width, 0, 50, (height - (randomHeight + gap))));
-        // console log for bugfixes
-        // System.out.println("top pipe:\t" + "x: " + width + "\ty: " + 0 + "\theight: "
-        // + (height - (randomHeight + gap)));
-
+     
         // bottom pipe
         pipes.add(new Rectangle(width, (height - randomHeight), 50, randomHeight));
-        // console log for bugfixes
-        // System.out.println("bottom pipe:\t" + "x:" + width + "\ty:" + (height -
-        // randomHeight) + "\theight:" + randomHeight);
-
+       
     }
 
     /**
@@ -137,7 +132,10 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
                         playerName = JOptionPane.showInputDialog(this, "Write your name, max 8 characters");
                     }
                 }
-
+                
+                readHighscoresFromFile(highscoreFile);
+                addToListAgain();
+                
                 HighScoreEntry player = new HighScoreEntry(playerName, score);
                 highScoreList.add(player);
                 
@@ -148,12 +146,14 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
             }
 
-            if (highScoreList.size() > 0) {
+            if (!isItHighscore(score)) {
                 readHighscoresFromFile(highscoreFile);
                 addToListAgain();
+                saveHighscores();
             } 
             
-
+            readToPaintHighscoresFromFile(highscoreFile);
+            
             g.setColor(Color.white);
             g.fillRect(0, 0, d.width, d.height);
             g.setColor(Color.black);
@@ -162,11 +162,16 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
 
             g.setFont(new Font("Arial", Font.BOLD, 20));
             g.drawString(toString(), d.height / 3, ((d.width / 4)));
+            
+            int count = 0;
+            for (String entry : highscorePaintList) {
+                g.setFont(new Font("Arial", Font.BOLD, 20));
+                g.drawString(entry, d.height / 5, ((d.width / 3) + count));
+                count += 20;
+            }
+          
 
-            g.setFont(new Font("Arial", Font.BOLD, 20));
-            g.drawString("Highscores:", d.height / 5, ((d.width / 3)));
-
-            scoreListCount = 0;
+           
             score = 0;
             return;
         }
@@ -208,7 +213,7 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         final List<Rectangle> toRemove = new ArrayList<>();
 
         for (Rectangle pipe : pipes) {
-            pipe.translate(-1, 0);
+            pipe.translate(gameSpeed, 0);
             if (pipe.x + pipe.width < 0) {
                 // we add to another list and remove later
                 // to avoid concurrent modification in a for-each loop
@@ -237,15 +242,16 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         }
 
         // Awards one point if bird passes trough a set of pipes
-        if (pipes.get(0).x == (width / 3 - bird.width) && !gameOver) {
+        if (pipes.get(0).x == (width / 3 - (bird.width-gameSpeed))  && !gameOver) {
             score++;
             System.out.println("Current score: " + score);
         }
+       
 
     }
 
     public boolean isItHighscore(int score) {
-        // highScores.put("lena", 0);
+       
 
         HighScoreEntry placeholder = new HighScoreEntry("player", score);
 
@@ -256,10 +262,6 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
             return true;
         }
 
-        // Lägg in placeholder i listan
-        // highScoreList.add(placeholder);
-
-        // Ta bort lägsta värdet i Listan
 
         int indexOfLastElement = highScoreList.size() - 1;
 
@@ -360,13 +362,27 @@ public class GameSurface extends JPanel implements ActionListener, KeyListener {
         }
 
     }
+    static List<String> highscorePaintList = new ArrayList<>();
+    private static void readToPaintHighscoresFromFile(Path highscoreFile) throws IOException {
+        try (var reader = Files.newBufferedReader(highscoreFile)) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+           highscorePaintList.add(line);
+              
+            }
+        }
+
+    }
     
     private void emptyHighscoreList() {
        highScoreList.clear();
         
     }
     
+    
+    
     private void addToListAgain() {
+        emptyHighscoreList();
         placeholderList.forEach((highScoreEntry) -> {
             highScoreList.add(highScoreEntry);
         });

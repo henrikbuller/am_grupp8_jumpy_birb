@@ -8,10 +8,12 @@ import static javax.swing.JFrame.EXIT_ON_CLOSE;
  */
 public class App {
     public static void main(String[] args) {
+        int gameSpeed = -2;
+      
              
         JFrame main = new JFrame("Jumpy Birb");
 
-        GameSurface gs = new GameSurface();
+        GameSurface gs = new GameSurface(gameSpeed);
 
         main.setSize(400, 400);
         main.setResizable(false);
